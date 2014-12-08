@@ -3,11 +3,14 @@ package webcam_code;
 import com.github.sarxos.webcam.Webcam;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.List;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -25,6 +28,7 @@ public class main extends javax.swing.JFrame {
 
     CameraThread cam = null;
     List<Webcam> l = null;
+    int connect = 0;
 
     /**
      * Creates new form main
@@ -54,6 +58,7 @@ public class main extends javax.swing.JFrame {
         exit_btn = new javax.swing.JButton();
         list_cams = new javax.swing.JButton();
         cam_dropdown = new javax.swing.JComboBox();
+        other_webcam = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -141,6 +146,9 @@ public class main extends javax.swing.JFrame {
             }
         });
 
+        other_webcam.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        other_webcam.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -150,29 +158,34 @@ public class main extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(start_webcam, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(join_webcam, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(list_cams)
-                            .addGap(18, 18, 18)
-                            .addComponent(cam_dropdown, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(webcam_out, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(start_webcam, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(join_webcam, javax.swing.GroupLayout.PREFERRED_SIZE, 236, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(stop_webcam, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(list_cams)
+                        .addGap(18, 18, 18)
+                        .addComponent(cam_dropdown, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(stop_webcam, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(exit_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(exit_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(other_webcam, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(webcam_out, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {join_webcam, start_webcam});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(webcam_out, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(webcam_out, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(other_webcam, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(start_webcam)
                     .addComponent(join_webcam))
@@ -193,11 +206,12 @@ public class main extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void start_webcamMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_start_webcamMouseClicked
-        cam = new CameraThread("CamThread", webcam_out, webcam_details, l.get(cam_dropdown.getSelectedIndex()));
-        cam.start();
+        connect = 0;
         join_webcam.setEnabled(false);
         Server server = new Server("Server Thread", ip_display);
         server.start();
+        cam = new CameraThread("CamThread", webcam_out, webcam_details, l.get(cam_dropdown.getSelectedIndex()), connect, server, null);
+        cam.start();
     }//GEN-LAST:event_start_webcamMouseClicked
 
     private void stop_webcamMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_stop_webcamMouseClicked
@@ -205,11 +219,12 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_stop_webcamMouseClicked
 
     private void join_webcamMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_join_webcamMouseClicked
+        connect = 1;
         String server_ip = JOptionPane.showInputDialog("Please enter IP to connect to:");
-        Client client = new Client("Client Thread", server_ip, 12345, ip_display);
+        Client client = new Client("Client Thread", server_ip, 12345, ip_display, other_webcam);
         client.start();
         start_webcam.setEnabled(false);
-        cam = new CameraThread("CamThread", webcam_out, webcam_details, l.get(cam_dropdown.getSelectedIndex()));
+        cam = new CameraThread("CamThread", webcam_out, webcam_details, l.get(cam_dropdown.getSelectedIndex()), connect, null, client);
         cam.start();
     }//GEN-LAST:event_join_webcamMouseClicked
 
@@ -268,6 +283,7 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JButton join_webcam;
     private javax.swing.JButton list_cams;
+    private javax.swing.JLabel other_webcam;
     private javax.swing.JButton start_webcam;
     private javax.swing.JButton stop_webcam;
     private javax.swing.JLabel webcam_details;
@@ -284,13 +300,17 @@ class Client implements Runnable {
     private String ip;
     private int port;
     private JLabel conn_details;
+    DataInputStream dis = null;
+    DataOutputStream dos = null;
+    JLabel other_output = null;
 
-    Client(String name, String server_ip, int server_port, JLabel ip_display) {
+    Client(String name, String server_ip, int server_port, JLabel ip_display, JLabel other_cam) {
         threadName = name;
         client_sock = null;
         ip = server_ip;
         port = server_port;
         conn_details = ip_display;
+        other_output = other_cam;
     }
 
     @Override
@@ -300,7 +320,7 @@ class Client implements Runnable {
             conn_details.setText("" + client_sock.getInetAddress().toString());
             System.out.println("CONNECTED TO SERVER");
         } catch (Exception e) {
-
+            System.out.println("Client: " + e.getMessage());
         }
     }
 
@@ -308,6 +328,17 @@ class Client implements Runnable {
         if (t == null) {
             t = new Thread(this, threadName);
             t.start();
+        }
+    }
+
+    public void receive_Client() {
+        try {
+            dis = new DataInputStream(client_sock.getInputStream());
+            BufferedImage from_server = ImageIO.read(dis);
+            Image img = from_server.getScaledInstance(other_output.getWidth(), other_output.getHeight(), Image.SCALE_SMOOTH);
+            other_output.setIcon(new ImageIcon(img));
+        } catch (Exception e) {
+            System.out.println("Receiving Client: " + e.getMessage());
         }
     }
 }
@@ -319,6 +350,8 @@ class Server implements Runnable {
     private ServerSocket serv_sock;
     private Socket client_sock;
     private JLabel conn_details;
+    DataInputStream dis = null;
+    DataOutputStream dos = null;
 
     Server(String name, JLabel server_details) {
         threadName = name;
@@ -345,6 +378,14 @@ class Server implements Runnable {
             t.start();
         }
     }
+
+    public void send_Server(BufferedImage to_send) {
+        try {
+            ImageIO.write(to_send, "JPG", client_sock.getOutputStream());
+        } catch (Exception e) {
+            System.out.println("Sending Server: " + e.getMessage());
+        }
+    }
 }
 
 class CameraThread implements Runnable {
@@ -354,12 +395,21 @@ class CameraThread implements Runnable {
     private final JLabel cam_output;
     private Webcam webcam = null;
     private final JLabel cam_details;
+    private int conn_mode = 0; //0 = SERVER //1 = CLIENT
+    Server s_copy = null;
+    Client c_copy = null;
 
-    CameraThread(String name, JLabel output, JLabel webcam_details, Webcam cam_selected) {
+    CameraThread(String name, JLabel output, JLabel webcam_details, Webcam cam_selected, int connect, Server s, Client c) {
         threadName = name;
         cam_output = output;
         cam_details = webcam_details;
         webcam = cam_selected;
+        conn_mode = connect;
+        if (conn_mode == 0) {
+            s_copy = s;
+        } else if (conn_mode == 1) {
+            c_copy = c;
+        }
     }
 
     @Override
@@ -372,10 +422,20 @@ class CameraThread implements Runnable {
                 System.out.println("No Webcam Detected");
             }
             webcam.open();
-            while (true) {
-                BufferedImage bi = webcam.getImage();
-                Image img = bi.getScaledInstance(cam_output.getWidth(), cam_output.getHeight(), Image.SCALE_SMOOTH);
-                cam_output.setIcon(new ImageIcon(img));
+            if (conn_mode == 0) {
+                while (true) {
+                    BufferedImage bi = webcam.getImage();
+                    Image img = bi.getScaledInstance(cam_output.getWidth(), cam_output.getHeight(), Image.SCALE_SMOOTH);
+                    cam_output.setIcon(new ImageIcon(img));
+                    s_copy.send_Server(bi);
+                }
+            } else if (conn_mode == 1) {
+                while (true) {
+                    BufferedImage bi = webcam.getImage();
+                    Image img = bi.getScaledInstance(cam_output.getWidth(), cam_output.getHeight(), Image.SCALE_SMOOTH);
+                    cam_output.setIcon(new ImageIcon(img));
+                    c_copy.receive_Client();
+                }
             }
         } catch (Exception e) {
             System.out.println("Thread: " + e.getMessage());
